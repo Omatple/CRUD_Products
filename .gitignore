@@ -1,0 +1,4 @@
+.env
+/vendor
+/public/img/*
+!/public/img/default.png
