@@ -1,7 +1,7 @@
 <?php
 
 use App\Database\Product;
-use App\Utils\MessageSweet;
+use App\Utils\AlertNotifier;
 
 session_start();
 
@@ -19,13 +19,11 @@ $products = Product::read();
     <meta name="description" content="">
     <meta name="keywords" content="">
     <meta name="author" content="Ángel Martínez Otero">
-    <title>Users</title>
+    <title>Products</title>
     <!-- CDN SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- CDN Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- CDN FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900 p-3 sm:p-5 antialiased">
@@ -60,22 +58,21 @@ $products = Product::read();
                                 <th scope="col" class="p-4">Actions</th>
                             </tr>
                         </thead>
-                        <form action="<?= $_SERVER['PHP_SELF'] ?>" method="POST">
-                            <tbody>
-                                <?php
-                                foreach ($products as $product) {
-                                    $stockColor = match (true) {
-                                        ($product['stock'] >= 80) => "green",
-                                        ($product['stock'] >= 50) => "teal",
-                                        ($product['stock'] >= 25) => "yellow",
-                                        default => "red",
-                                    };
-                                    echo <<< TXT
+                        <tbody>
+                            <?php
+                            foreach ($products as $product) {
+                                $stockColor = match (true) {
+                                    ($product['stock'] >= 80) => "green",
+                                    ($product['stock'] >= 50) => "teal",
+                                    ($product['stock'] >= 25) => "yellow",
+                                    default => "red",
+                                };
+                                echo <<< TXT
                                         <tr class="border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
                                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">{$product['id']}</td>
                                             <th scope="row" class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                                <div class="flex items-center mr-3">
-                                                    <img src="{$product['image']}" alt="{$product['name']} Image" class="h-8 w-auto mr-3">
+                                                <div class="shrink-0 flex items-center">
+                                                    <img id='preview_img' class="h-12 w-12 object-cover rounded-full mr-3" src="{$product['image']}" alt="Current product photo" />
                                                     {$product['name']}
                                                 </div>
                                             </th>
@@ -111,16 +108,15 @@ $products = Product::read();
                                             </td>
                                         </tr>
                                     TXT;
-                                }
-                                ?>
-                            </tbody>
-                        </form>
+                            }
+                            ?>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </section>
 </body>
-<?= MessageSweet::displaySweetAlertMessage(); ?>
+<?= AlertNotifier::showAlert(); ?>
 
 </html>

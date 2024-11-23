@@ -2,6 +2,7 @@
 
 namespace App\Database;
 
+use App\Utils\ImageConstants;
 use App\Utils\TypeProduct;
 use \Faker\Factory;
 use \Mmo\Faker\FakeimgProvider;
@@ -17,14 +18,14 @@ class Product extends QueryExecutor
 
     public static function read(): array
     {
-        return parent::executeQuery("SELECT * FROM products", "Failed reading products")->fetchAll();
+        return parent::executeQuery("SELECT * FROM products", "Unable to retrieve products")->fetchAll();
     }
 
     public function create(): void
     {
         parent::executeQuery(
             "INSERT INTO products (name, description, image, type, stock) VALUES (:n, :d, :i, :t, :s)",
-            "Failed inserting product '{$this->name}'",
+            "Failed to create product '{$this->name}'",
             [
                 ":n" => $this->name,
                 ":d" => $this->description,
@@ -45,43 +46,53 @@ class Product extends QueryExecutor
             ":im" => $this->image,
             ":s" => $this->stock,
         ];
-        parent::executeQuery("UPDATE products SET name = :n, description = :d, image = :im, stock = :s, type = :t WHERE id = :i", "Failed updating product '$id'", $statements);
+        parent::executeQuery("UPDATE products SET name = :n, description = :d, image = :im, stock = :s, type = :t WHERE id = :i", "Failed to update product with ID '$id'", $statements);
+    }
+
+    public static function resetToDefaultImage(int $id): void
+    {
+        parent::executeQuery("UPDATE products SET image = :im WHERE id = :i", "Failed to reset product image to default", [":im" => "img/" . ImageConstants::DEFAULT_IMAGE_FILENAME, ":i" => $id]);
     }
 
     public static function delete(int $id): void
     {
-        parent::executeQuery("DELETE FROM products WHERE id = :i", "Failed while delete product '$id'", [":i" => $id]);
+        parent::executeQuery("DELETE FROM products WHERE id = :i", "Failed to delete product with ID '$id'", [":i" => $id]);
     }
 
-    public static function generateFakesProducts(int $amount): void
+    public static function generateFakeProducts(int $amount): void
     {
         $faker = Factory::create("es_ES");
         $faker->addProvider(new FakeimgProvider($faker));
         for ($i = 0; $i < $amount; $i++) {
             $name = ucwords($faker->unique()->words(random_int(1, 3), true));
-            $wordsName = explode(" ", $name);
-            $textImage = implode(array_map(fn($item) => substr($item, 0, 1), $wordsName));
+            $initials = implode(array_map(fn($word) => $word[0], explode(" ", $name)));
             (new Product)
                 ->setName($name)
                 ->setDescription($faker->text())
-                ->setImage($faker->fakeImg(dir: __DIR__ . "/../../public/img/", width: 640, height: 640, fullPath: false, text: $textImage, backgroundColor: [random_int(0, 255), random_int(0, 255), random_int(0, 255)]))
+                ->setImage($faker->fakeImg(dir: __DIR__ . "/../../public/img/", width: 640, height: 640, fullPath: false, text: $initials, backgroundColor: [random_int(0, 255), random_int(0, 255), random_int(0, 255)]))
                 ->setType($faker->randomElement(TypeProduct::cases())->toString())
                 ->setStock(random_int(0, 100))
                 ->create();
         }
     }
 
-    public static function getProductById(int $id): array
+    public static function findById(int $id): array
     {
-        return parent::executeQuery("SELECT * FROM products WHERE id=:i", "Failed while retreive data product", [":i" => $id])->fetch();
+        return parent::executeQuery(
+            "SELECT * FROM products WHERE id = :id",
+            "Failed to retrieve product with ID '$id'",
+            [":id" => $id]
+        )->fetch();
     }
 
-    public static function isAttributeTaken(string $field, string $value, ?string $id = null): bool
+    public static function isFieldUnique(string $field, string $value, ?int $id = null): bool
     {
-        return (!$id) ?
-            !parent::executeQuery("SELECT COUNT(*) AS total FROM products WHERE $field=:v", "Failes retreive $field '$value' of the products", [":v" => $value])->fetchColumn()
-            :
-            !parent::executeQuery("SELECT COUNT(*) AS total FROM products WHERE $field=:v AND id<>:i", "Failes retreive $field '$value' of the products quiting $id", [":v" => $value, ":i" => $id])->fetchColumn();
+        $query = $id
+            ? "SELECT COUNT(*) AS total FROM products WHERE $field = :value AND id != :id"
+            : "SELECT COUNT(*) AS total FROM products WHERE $field = :value";
+
+        $params = $id ? [":value" => $value, ":id" => $id] : [":value" => $value];
+        return !parent::executeQuery($query, "Failed to check uniqueness of $field '$value'", $params)->fetchColumn();
     }
 
     /**

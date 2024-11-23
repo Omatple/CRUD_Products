@@ -3,10 +3,10 @@
 namespace App\Database;
 
 use \Dotenv\Dotenv;
-use Exception;
+use \Exception;
 use \PDO;
-use PDOException;
-use RuntimeException;
+use \PDOException;
+use \RuntimeException;
 
 class Connection
 {

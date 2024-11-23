@@ -2,13 +2,13 @@
 
 use App\Database\Product;
 
-$amount = (int) readline("Write amount for creates fakes products (5-25), or '0' if you want exit: ");
-if ($amount === 0) exit("\nExits for request of user..." . PHP_EOL);
-while ($amount < 5 | $amount > 25) {
-    $amount = (int) readline("ERROR: Write amount for creates fakes products (5-25), or '0' if you want exit: ");
-    if ($amount === 0) exit("\nExits for request of user..." . PHP_EOL);
-}
 require __DIR__ . "/../vendor/autoload.php";
 
-Product::generateFakesProducts($amount);
-echo "$amount fakes products creates" . PHP_EOL;
+do {
+    $amount = (int) readline("Enter the number of fake products to create (5-25), or '0' to exit: ");
+    if ($amount === 0) exit("\nExiting as requested by the user..." . PHP_EOL);
+    if ($amount < 5 || $amount > 25) echo "ERROR: Please enter a number between 5 and 25." . PHP_EOL;
+} while ($amount < 5 || $amount > 25);
+
+Product::generateFakeProducts($amount);
+echo "$amount fake products created successfully." . PHP_EOL;

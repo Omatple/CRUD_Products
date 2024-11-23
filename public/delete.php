@@ -1,13 +1,13 @@
 <?php
 
 use App\Database\Product;
-use App\Utils\UtilsSession;
+use App\Utils\Navigation;
 
 require __DIR__ . "/../vendor/autoload.php";
 session_start();
 
 $id = filter_input(INPUT_POST, "id", FILTER_VALIDATE_INT);
-if (!$id || Product::isAttributeTaken("id", $id)) UtilsSession::redirectTo("$.php");
+if (!$id || Product::isFieldUnique("id", $id)) Navigation::redirectToUrl("products.php");
 Product::delete($id);
-$_SESSION["message"] = "Product delete success";
-UtilsSession::redirectTo("products.php");
+$_SESSION["message"] = "The product has been successfully deleted.";
+Navigation::reloadPage("products.php");
